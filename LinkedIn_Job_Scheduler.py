@@ -269,19 +269,24 @@ def _applicants_from_text(page_text: str) -> str | None:
     return match.group(0).strip() if match else None
 
 
-def fetch_applicants(session: requests.Session, job_url: str) -> str:
+def fetch_applicants_and_posted_time(session: requests.Session, job_url: str) -> str:
     if not job_url:
         return "N/A"
     page_text = fetch_job_page(session, job_url)
     if not page_text:
         return "N/A"
     soup = BeautifulSoup(page_text, "html.parser")
+    hours_posted = re.findall(r'(\d+\s+(?:minute|hour|day|week|month|year)s?\s+ago)',page_text, re.IGNORECASE)
+    
+    posted_time = ""
+    if hours_posted is not None and len(hours_posted) > 0:
+        posted_time = hours_posted[0]
     return (
         _applicants_from_json(soup)
         or _applicants_from_html(soup)
         or _applicants_from_text(page_text)
         or "N/A"
-    )
+    ), posted_time
 
 
 def extract_applicant_count(applicant_str: str) -> int:
@@ -424,8 +429,9 @@ def collect_jobs(session: requests.Session, location: str, job_role: str, fetche
                 continue
             seen_urls.add(job.job_url)
 
-            job.applicants = fetch_applicants(session, job.job_url)
-            if is_low_competition(job):
+            job.applicants, posted_time = fetch_applicants_and_posted_time(session, job.job_url)
+            if is_low_competition(job) and posted_time.strip() != "" and ("minutes" in posted_time or "hours" in posted_time):
+                print("Posted Time : ", posted_time)
                 job.description = fetch_description(session, job.job_url)
                 job.fetched_at  = fetched_at
                 all_jobs.append(job)
