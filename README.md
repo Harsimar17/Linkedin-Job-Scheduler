@@ -70,7 +70,7 @@ Edit these constants at the top of the script to tune behavior:
 | `JOB_COUNT` | `10` | Max jobs to collect per run |
 | `FETCH_WINDOW` | `3600` | Look-back window in seconds (1 hour) |
 | `OUTPUT_FILE` | `linkedin_jobs_hourly.csv` | Default output file name |
-| `INTERVAL_MINUTES` | `15` | How often the scheduler fires |
+| `INTERVAL_MINUTES` | `60` | How often the scheduler fires |
 
 ## How It Works
 
