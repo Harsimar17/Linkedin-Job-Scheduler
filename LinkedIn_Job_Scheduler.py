@@ -6,7 +6,7 @@ New results are appended to the CSV so the file grows over time.
 HOW TO USE:
     python LinkedIn_Job_Scheduler.py
 
-    You will be prompted once for location, job role, and output file.
+    You will be prompted once for location, job role, and  file.
     The script then waits until the next top-of-hour and fires every 60 minutes.
     Press Ctrl+C to stop.
 """
@@ -28,7 +28,7 @@ from bs4 import BeautifulSoup
 
 JOB_COUNT   = 10          # max jobs per hourly run
 FETCH_WINDOW = 3600        # 1 hour in seconds — always fetch the past hour
-OUTPUT_FILE = "linkedin_jobs_hourly.csv"
+_FILE = "linkedin_jobs_hourly"
 
 LI_AT = "AQEDAU60xhACGa-kAAABnqetD0MAAAGey7mTQ1YAT_2eKF22aKQzQpDRIeurRfnGiuCfLdvaY2PHxHJOqaiwmJjICoeYB5sSPKhMrbyxUxlAnN0H7_rYvh0TzHaxLAYFxQrR4ex0MXSAu45yAdt-07-C"
 
@@ -101,6 +101,7 @@ def build_search_url(keyword: str, location: str, start: int, seconds: int) -> s
         "location": location,
         "f_TPR":    seconds,
         "start":    start,
+        "f_EA":"true"
     }
     return "https://www.linkedin.com/jobs/search/?" + urlencode(params)
 
@@ -444,7 +445,7 @@ def collect_jobs(session: requests.Session, location: str, job_role: str, fetche
 
     return all_jobs
 
-# ─── CSV Output ───────────────────────────────────────────────────────────────
+# ─── CSV  ───────────────────────────────────────────────────────────────
 
 def save_csv(jobs: list[Job], filename: str):
     file_exists = os.path.exists(filename) and os.path.getsize(filename) > 0
@@ -461,7 +462,7 @@ def save_csv(jobs: list[Job], filename: str):
 
 # ─── Scheduler ────────────────────────────────────────────────────────────────
 
-INTERVAL_MINUTES = 15  # run every 15 minutes
+INTERVAL_MINUTES = 60  # run every 60 minutes
 
 
 def seconds_until_next_interval() -> float:
@@ -473,11 +474,11 @@ def seconds_until_next_interval() -> float:
     return float(wait)
 
 
-def run_scheduler(location: str, job_role: str, output_file: str):
+def run_scheduler(location: str, job_role: str, _file: str):
     session = make_session()
 
     print(f"\nScheduler started for '{job_role}' in '{location}'.")
-    print(f"Output file  : {output_file}")
+    print(f" file  : {_file}")
     print(f"Interval     : every {INTERVAL_MINUTES} minutes")
     print(f"Fetch window : past 1 hour of jobs each run")
     print("Press Ctrl+C to stop.\n")
@@ -491,7 +492,7 @@ def run_scheduler(location: str, job_role: str, output_file: str):
         jobs = collect_jobs(session, location, job_role, fetched_at)
 
         if jobs:
-            save_csv(jobs, output_file)
+            save_csv(jobs, _file + "_" + str(datetime.now()) + ".csv")
         else:
             print("  No qualifying jobs found this run.")
 
@@ -506,12 +507,12 @@ def run_scheduler(location: str, job_role: str, output_file: str):
 def main():
     location = input("Enter location for job postings:\n").strip()
     job_role = input("Enter job role:\n").strip()
-    output_file = input(f"Output CSV file name (press Enter for '{OUTPUT_FILE}'):\n").strip()
-    if not output_file:
-        output_file = OUTPUT_FILE
+    _file = input(f" CSV file name (press Enter for '{_FILE}'):\n").strip()
+    if not _file:
+        _file = _FILE
 
     try:
-        run_scheduler(location, job_role, output_file)
+        run_scheduler(location, job_role, _file)
     except KeyboardInterrupt:
         print("\n\nScheduler stopped.")
 
